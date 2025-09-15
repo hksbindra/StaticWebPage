@@ -1,9 +1,15 @@
+<!--
+  /**
+   * @file callback.html
+   * @description A static HTML page to handle OAuth callbacks, showing success/error messages and redirecting to the app's deep link.
+   */
+-->
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Authentication Success</title>
+    <title>Authentication</title>
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
@@ -22,6 +28,7 @@
         padding: 40px;
         border-radius: 8px;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
       }
       h1 {
         font-size: 24px;
@@ -31,12 +38,35 @@
         font-size: 16px;
         color: #606770;
       }
+      .error {
+        color: #d93025;
+      }
+      .error-details {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 12px;
+        background-color: #f8f8f8;
+        border: 1px solid #e0e0e0;
+        padding: 8px;
+        border-radius: 4px;
+        margin-top: 16px;
+        word-break: break-all;
+        text-align: left;
+      }
     </style>
   </head>
   <body>
-    <div class="container">
+    <div id="success-container" class="container">
       <h1>Authentication Successful</h1>
       <p>You can now close this window and return to the Kitty-AI application.</p>
+    </div>
+    <div id="error-container" class="container" style="display: none">
+      <h1 class="error">Authentication Failed</h1>
+      <p id="error-message">
+        An error occurred during the authentication process. Please try again.
+      </p>
+      <div id="error-details-wrapper" style="display: none">
+        <p id="error-details" class="error-details"></p>
+      </div>
     </div>
 
     <script>
@@ -44,8 +74,33 @@
         const params = new URLSearchParams(window.location.search)
         const code = params.get('code')
         const state = params.get('state')
+        const error = params.get('error')
+        const errorDescription = params.get('error_description')
+
         if (code && state) {
-          window.location.href = `kitty-ai://oauth/callback?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`
+          document.title = 'Authentication Success'
+          window.location.href = `kitty-ai://oauth/callback?code=${encodeURIComponent(
+            code
+          )}&state=${encodeURIComponent(state)}`
+        } else {
+          document.title = 'Authentication Failed'
+          document.getElementById('success-container').style.display = 'none'
+          document.getElementById('error-container').style.display = 'block'
+
+          if (error) {
+            const errorMessageElem = document.getElementById('error-message')
+            const errorDetailsElem = document.getElementById('error-details')
+            const errorDetailsWrapper = document.getElementById(
+              'error-details-wrapper'
+            )
+
+            errorMessageElem.textContent =
+              'The authentication provider returned an error.'
+            errorDetailsElem.textContent = `Error: ${error}\nDescription: ${
+              errorDescription || 'No description provided.'
+            }`
+            errorDetailsWrapper.style.display = 'block'
+          }
         }
       })()
     </script>
