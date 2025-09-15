@@ -78,29 +78,34 @@
         const errorDescription = params.get('error_description')
 
         if (code && state) {
+          // Success case: redirect to the app with the code.
           document.title = 'Authentication Success'
           window.location.href = `kitty-ai://oauth/callback?code=${encodeURIComponent(
             code
           )}&state=${encodeURIComponent(state)}`
+        } else if (error) {
+          // Denial/Error case: redirect to the app with the error details.
+          document.title = 'Authentication Failed'
+          const errorUri = `kitty-ai://oauth/error?error=${encodeURIComponent(
+            error
+          )}&error_description=${encodeURIComponent(errorDescription || '')}`
+          window.location.href = errorUri
+
+          // Also show the error on the page as a fallback in case the redirect fails.
+          document.getElementById('success-container').style.display = 'none'
+          document.getElementById('error-container').style.display = 'block'
+          const errorMessageElem = document.getElementById('error-message')
+          const errorDetailsElem = document.getElementById('error-details')
+          const errorDetailsWrapper = document.getElementById('error-details-wrapper')
+          errorMessageElem.textContent = 'The authentication provider returned an error. Redirecting back to the application...'
+          errorDetailsElem.textContent = `Error: ${error}\nDescription: ${errorDescription || 'No description provided.'}`
+          errorDetailsWrapper.style.display = 'block'
         } else {
+          // Invalid state case: no code and no error.
           document.title = 'Authentication Failed'
           document.getElementById('success-container').style.display = 'none'
           document.getElementById('error-container').style.display = 'block'
-
-          if (error) {
-            const errorMessageElem = document.getElementById('error-message')
-            const errorDetailsElem = document.getElementById('error-details')
-            const errorDetailsWrapper = document.getElementById(
-              'error-details-wrapper'
-            )
-
-            errorMessageElem.textContent =
-              'The authentication provider returned an error.'
-            errorDetailsElem.textContent = `Error: ${error}\nDescription: ${
-              errorDescription || 'No description provided.'
-            }`
-            errorDetailsWrapper.style.display = 'block'
-          }
+          document.getElementById('error-message').textContent = 'Invalid authentication response received. Please close this window and try again.'
         }
       })()
     </script>
